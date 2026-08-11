@@ -8,10 +8,16 @@
 import SwiftUI
 
 @main
-struct FlashCardCohort10App: App {
+struct FlashcardCohort10App: App {
+
+    @StateObject var store = DeckStore()
+
     var body: some Scene {
         WindowGroup {
-            ContentView()
+            NavigationStack {
+                DeckListView()
+            }
+            .environmentObject(store)
         }
     }
 }
