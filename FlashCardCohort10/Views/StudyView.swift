@@ -15,30 +15,38 @@ struct StudyView: View {
     @State private var isFlipped: Bool = false
     @State private var sessionCards: [Flashcard] = []
 
-    // Settings for our app
+    // Settings persisted via @AppStorage
     @AppStorage("showBackFirst") private var showBackFirst: Bool = false
     @AppStorage("shuffleCards") private var shuffleCards: Bool = true
     @AppStorage("cardsPerSession") private var cardsPerSession: Int = 10
+    @AppStorage("fontSizeScale") private var fontSizeScale: Double = 1.0
+    @AppStorage("themeName") private var themeName: String = "Classic"
 
     var body: some View {
-        VStack(spacing: 12) {
+        VStack(spacing: 16) {
 
             if sessionCards.isEmpty {
                 Text("No cards inside this deck")
+                    .foregroundStyle(.secondary)
             } else {
-                Text("\(index+1) / \(sessionCards.count)")
+                Text("\(index + 1) / \(sessionCards.count)")
+                    .font(.subheadline)
+                    .foregroundStyle(.secondary)
             }
 
             ZStack {
-                RoundedRectangle(cornerRadius: 16)
-                    .fill(.thinMaterial)
+                CardThemeHelper.cardBackground(for: themeName)
                     .frame(height: 220)
 
                 Text(currentText)
+                    .font(.system(size: CGFloat(17 * fontSizeScale), weight: .medium))
+                    .multilineTextAlignment(.center)
                     .padding()
-
-            }.onTapGesture {
-                isFlipped.toggle()
+            }
+            .onTapGesture {
+                withAnimation(.easeInOut(duration: 0.3)) {
+                    isFlipped.toggle()
+                }
             }
 
             HStack(spacing: 12) {
@@ -50,7 +58,9 @@ struct StudyView: View {
                 .disabled(index == 0)
 
                 Button("Flip card to \(isFlipped ? "Back" : "Front")") {
-                    isFlipped.toggle()
+                    withAnimation(.easeInOut(duration: 0.3)) {
+                        isFlipped.toggle()
+                    }
                 }
                 .buttonStyle(.borderedProminent)
 
@@ -62,6 +72,7 @@ struct StudyView: View {
 
             }
         }
+        .padding()
         .navigationTitle(deck.name)
         .onAppear {
             startSession()
@@ -69,7 +80,6 @@ struct StudyView: View {
     }
 
     private var currentText: String {
-
         guard !sessionCards.isEmpty else { return "EMPTY CARD" }
         let card = sessionCards[index]
         let showingFront = showBackFirst ? isFlipped : !isFlipped
@@ -78,7 +88,6 @@ struct StudyView: View {
 
     private func startSession() {
         var cards = deck.card
-
         if shuffleCards { cards.shuffle() }
         let limit = min(cardsPerSession, cards.count)
         sessionCards = Array(cards.prefix(limit))
